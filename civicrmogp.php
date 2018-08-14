@@ -142,13 +142,30 @@ function civicrmogp_civicrm_entityTypes(&$entityTypes) {
  */
 function civicrmogp_civicrm_buildForm($formName, &$form) {
   if ($formName == 'CRM_Contribute_Form_Contribution_Main') {
-    // adds: <meta property="og:title" content="[...]" />
-    $ogpTitle = htmlentities($form->_values['title'], ENT_QUOTES);
-    CRM_Utils_System::addHTMLHead("<meta property='og:title' content='$ogpTitle'/>");
+    $id = $form->get('id');
+
+    $frontend = FALSE;
+    $config = CRM_Core_Config::singleton();
+    if ($config->userFramework == 'WordPress') {
+      add_filter( 'jetpack_enable_open_graph', '__return_false' );
+      $frontend = TRUE;
+    }
 
     // adds: <meta property="og:description" content="[...]" />
     $ogpDescription = htmlentities(strip_tags($form->_values['intro_text']), ENT_QUOTES);
     CRM_Utils_System::addHTMLHead("<meta property='og:description' content='$ogpDescription'/>");
+
+    // adds: <meta property="og:title" content="[...]" />
+    $ogpTitle = htmlentities($form->_values['title'], ENT_QUOTES);
+    CRM_Utils_System::addHTMLHead("<meta property='og:title' content='$ogpTitle'/>");
+
+    // adds: <meta property="og:type" content="website" />
+    CRM_Utils_System::addHTMLHead("<meta property='og:type' content='website'/>");
+
+    // adds: <meta property="og:url" content="[...]" />
+    $ogpURLQuery = array('reset' => 1, 'id' => $id);
+    $ogpURL = CRM_Utils_System::url('civicrm/contribute/transact',$ogpURLQuery, TRUE, NULL, TRUE, $frontend, FALSE);
+    CRM_Utils_System::addHTMLHead("<meta property='og:url' content='$ogpURL'/>");
   }
 }
 
@@ -165,9 +182,13 @@ function civicrmogp_civicrm_pageRun(&$page) {
     $dao->id = $id;
 
     if ($dao->find(TRUE)) {
-      // adds: <meta property="og:title" content="[...]" />
-      $ogpTitle = htmlentities($dao->title, ENT_QUOTES);
-      CRM_Utils_System::addHTMLHead("<meta property='og:title' content='$ogpTitle'/>");
+
+      $frontend = FALSE;
+      $config = CRM_Core_Config::singleton();
+      if ($config->userFramework == 'WordPress') {
+        add_filter( 'jetpack_enable_open_graph', '__return_false' );
+        $frontend = TRUE;
+      }
 
       // adds: <meta property="og:description" content="[...]" />
       $ogpDescription = htmlentities(strip_tags($dao->intro_text), ENT_QUOTES);
@@ -181,6 +202,18 @@ function civicrmogp_civicrm_pageRun(&$page) {
         // adds: <meta property="og:image" content="http://[...]" />
         CRM_Utils_System::addHTMLHead("<meta property='og:image' content='$ogpImage'/>");
       }
+
+      // adds: <meta property="og:title" content="[...]" />
+      $ogpTitle = htmlentities($dao->title, ENT_QUOTES);
+      CRM_Utils_System::addHTMLHead("<meta property='og:title' content='$ogpTitle'/>");
+
+      // adds: <meta property="og:type" content="website" />
+      CRM_Utils_System::addHTMLHead("<meta property='og:type' content='website'/>");
+
+      // adds: <meta property="og:url" content="[...]" />
+      $ogpURLQuery = array('reset' => 1, 'id' => $id);
+      $ogpURL = CRM_Utils_System::url('civicrm/pcp/info',$ogpURLQuery, TRUE, NULL, TRUE, TRUE, FALSE);
+      CRM_Utils_System::addHTMLHead("<meta property='og:url' content='$ogpURL'/>");
     }
   }
 }
